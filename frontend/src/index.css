@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Styles de base très simples en CSS classique */
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #f9fafb; /* gris très clair */
+  color: #111827; /* gris très foncé */
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
