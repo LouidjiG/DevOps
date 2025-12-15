@@ -32,7 +32,7 @@ RUN npm ci --only=production
 COPY --from=builder /app/dist ./dist
 # On copie aussi les fichiers nécessaires pour les migrations si besoin (à ajuster selon structure)
 COPY --from=builder /app/scripts ./scripts
-COPY --from=builder /app/src/seeders ./src/seeders 
+    # COPY --from=builder /app/src/seeders ./src/seeders 
 # Note: Le code source TypeScript n'est pas nécessaire en prod, mais les scripts de migration le sont peut-être.
 
 # Créer un utilisateur non-root pour la sécurité

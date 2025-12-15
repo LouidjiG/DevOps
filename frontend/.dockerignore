@@ -3,7 +3,6 @@ dist
 .env
 .DS_Store
 Dockerfile
-nginx.conf
 .dockerignore
 .git
 .gitignore

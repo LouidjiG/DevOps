@@ -16,7 +16,7 @@ const PollsPage = () => {
         setLoading(true);
         const response = await pollsApi.getAllPolls();
         setPolls(response.data.data);
-        console.error('Erreur lors de la récupération des sondages:', err);
+        // console.error('Erreur lors de la récupération des sondages:', err);
         setError('Impossible de charger les sondages. Veuillez réessayer plus tard.');
       } finally {
         setLoading(false);
@@ -94,14 +94,13 @@ const PollsPage = () => {
                     </div>
                   </div>
                   <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      poll.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${poll.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}
                   >
                     {poll.isActive ? 'Actif' : 'Terminé'}
                   </span>
                 </div>
-                
+
                 <div className="mt-4 flex justify-between items-center">
                   <div className="text-sm text-gray-500">
                     {poll.options?.length || 0} options • {poll.budget} € de récompense totale

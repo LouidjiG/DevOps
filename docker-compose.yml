@@ -1,0 +1,50 @@
+version: '3.8'  # Version du format docker-compose
+
+services:
+  # --- Service Base de Données (PostgreSQL) ---
+  db:
+    image: postgres:15-alpine
+    container_name: devops-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: vote2earn
+    ports:
+      - "5432:5432"  # Accès local possible sur localhost:5432
+    volumes:
+      - db_data:/var/lib/postgresql/data  # Persistance des données (volume géré par Docker)
+
+  # --- Service Backend (API) ---
+  backend:
+    build: ./backend  # Construit l'image à partir du dossier backend
+    container_name: devops-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # Variables requises par index.ts
+      NODE_ENV: development
+      PORT: 3000
+      DB_HOST: db      # Nom du service ci-dessus (DNS interne Docker)
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_NAME: vote2earn
+      DB_PASSWORD: 1234  # Doit correspondre à POSTGRES_PASSWORD
+      JWT_SECRET: super_secret_key_pour_le_dev
+      JWT_EXPIRES_IN: 1d
+    depends_on:
+      - db  # Attend que la DB soit lancée avant de démarrer
+
+  # --- Service Frontend (React/Nginx) ---
+  frontend:
+    build: ./frontend # Construit l'image à partir du dossier frontend
+    container_name: devops-frontend
+    restart: always
+    ports:
+      - "8080:80"     # On mappe le port 80 du conteneur (Nginx) sur le port 8080 de ta machine
+    depends_on:
+      - backend       # Bonnes pratiques, même si techniquement indépendant au démarrage
+
+volumes:
+  db_data:            # Déclaration du volume pour la persistance

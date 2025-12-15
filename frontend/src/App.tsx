@@ -46,7 +46,7 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
 
 function Home() {
   const { user } = useAuth();
-  
+
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -56,7 +56,7 @@ function Home() {
               {user ? 'Bienvenue sur votre espace' : 'Commencez dès maintenant'}
             </h2>
             <p className="text-gray-600 mb-6">
-              {user 
+              {user
                 ? 'Accédez à votre tableau de bord pour voir vos sondages et votes.'
                 : 'Créez un compte pour commencer à voter et gagner des récompenses.'}
             </p>
@@ -92,8 +92,8 @@ function Home() {
 }
 
 function DashboardPage() {
-  const { user, logout } = useAuth();
-  
+  const { user } = useAuth();
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -118,70 +118,70 @@ function DashboardPage() {
 
 function App() {
   console.log('Rendu du composant App');
-  
+
   const token = localStorage.getItem('token');
   console.log('Token dans App:', token);
-  
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-          <div className="min-h-screen bg-gray-50">
-            <Header />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route
-                path="/login"
-                element={
-                  <AuthRoute>
-                    <LoginPage />
-                  </AuthRoute>
-                }
-              />
-              <Route
-                path="/register"
-                element={
-                  <AuthRoute>
-                    <RegisterPage />
-                  </AuthRoute>
-                }
-              />
-              <Route path="/db-test" element={<DbTestPage />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <DashboardPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/polls"
-                element={
-                  <ProtectedRoute>
-                    <PollsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/polls/new"
-                element={
-                  <ProtectedRoute>
-                    <CreatePollPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/polls/:pollId" element={<PollDetailPage />} />
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
+        <div className="min-h-screen bg-gray-50">
+          <Header />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route
+              path="/login"
+              element={
+                <AuthRoute>
+                  <LoginPage />
+                </AuthRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <AuthRoute>
+                  <RegisterPage />
+                </AuthRoute>
+              }
+            />
+            <Route path="/db-test" element={<DbTestPage />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/polls"
+              element={
+                <ProtectedRoute>
+                  <PollsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/polls/new"
+              element={
+                <ProtectedRoute>
+                  <CreatePollPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/polls/:pollId" element={<PollDetailPage />} />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
       </AuthProvider>
     </QueryClientProvider>
   );

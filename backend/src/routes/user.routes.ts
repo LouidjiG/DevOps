@@ -7,7 +7,7 @@ const router = Router();
 router.get('/my-votes', protect, async (req: Request, res: Response) => {
   try {
     const votes = await Vote.findAll({
-      where: { userId: req.user.id },
+      where: { userId: req.user?.id },
       include: [
         {
           model: Poll,
@@ -26,7 +26,7 @@ router.get('/my-votes', protect, async (req: Request, res: Response) => {
         poll: Poll;
         pollOption: PollOption;
       };
-      
+
       return {
         id: vote.id,
         question: voteWithAssociations.poll?.question || 'Unknown Poll',
