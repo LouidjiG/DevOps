@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../backend.yml
+  - ../frontend.yml
+  - ../postgres.yml
+  - ../configmap.yml
+  # secrets.yml n'est pas inclus car il doit être géré manuellement ou via GitHub Secrets
+
+patches:
+  - path: backend-patch.yml
+  - path: frontend-patch.yml
+  - path: postgres-patch.yml
+  - path: configmap-patch.yml

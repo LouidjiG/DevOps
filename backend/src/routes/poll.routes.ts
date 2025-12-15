@@ -57,18 +57,18 @@ router.post('/', async (req: Request, res: Response) => {
         message: 'La récompense doit être un nombre positif.'
       });
     }
-    
+
     const userBalance = user.getDataValue('balance');
     const budgetValue = Number(rewardValue);
     const isAdmin = user.getDataValue('role') === 'admin';
-    
+
     if (isNaN(budgetValue) || budgetValue <= 0) {
       return res.status(400).json({
         status: 'error',
         message: 'Le budget doit être un nombre positif.'
       });
     }
-    
+
     if (!isAdmin && userBalance < budgetValue) {
       return res.status(400).json({
         status: 'error',
@@ -78,7 +78,7 @@ router.post('/', async (req: Request, res: Response) => {
 
     const result = await sequelize.transaction(async (t: Transaction) => {
       console.log('Début de la transaction de création de sondage');
-      
+
       console.log('Création du sondage avec les données:', {
         question,
         description: description || null,
@@ -88,7 +88,7 @@ router.post('/', async (req: Request, res: Response) => {
         isActive: true,
         endsAt: endsAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
       });
-      
+
       const poll = await Poll.create(
         {
           question: question as string,
@@ -99,12 +99,12 @@ router.post('/', async (req: Request, res: Response) => {
           isActive: true,
           endsAt: endsAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
         },
-        { 
+        {
           transaction: t,
           returning: true
         }
       );
-      
+
       console.log('Sondage créé avec succès. ID du sondage:', poll.id);
       console.log('Données du sondage créé:', poll.toJSON());
 
@@ -113,40 +113,40 @@ router.post('/', async (req: Request, res: Response) => {
       }
 
       console.log('Création des options du sondage:', options);
-      
+
       const pollOptions = [];
-      
+
       const pollId = poll.getDataValue('id');
-      
+
       if (!pollId) {
         throw new Error('L\'ID du sondage n\'a pas été correctement généré');
       }
-      
+
       console.log('ID du sondage pour les options (via getDataValue):', pollId);
-      
+
       for (const text of options) {
         try {
           console.log('Création de l\'option avec le texte:', text);
-          
+
           const optionData = {
             text: String(text),
             pollId: pollId,
             voteCount: 0,
             rewardPerVote: 0.0001
           };
-          
+
           console.log('Données de l\'option à créer:', optionData);
-          
+
           const option = await PollOption.create({
             text: String(text),
             pollId: pollId,
             voteCount: 0,
             rewardPerVote: 0.0001
-          }, { 
+          }, {
             transaction: t,
             returning: true
           });
-          
+
           console.log('Option créée avec succès:', option.toJSON());
           pollOptions.push(option);
         } catch (err) {
@@ -432,14 +432,14 @@ router.post('/admin/add-credit', async (req: Request, res: Response) => {
         message: 'Le montant doit être un nombre positif.'
       });
     }
-    
+
     await User.increment('balance', {
       by: creditAmount,
       where: { id: userId }
     });
 
     const updatedUser = await User.findByPk(userId);
-    
+
     res.json({
       status: 'success',
       message: `Crédit ajouté avec succès. Nouveau solde: ${updatedUser?.getDataValue('balance')}`,
@@ -464,7 +464,7 @@ router.get('/created', async (req: Request, res: Response) => {
       include: [
         {
           model: PollOption,
-          as: 'options',
+          as: 'pollOptions',
           attributes: ['id', 'text', 'voteCount']
         }
       ],

@@ -11,10 +11,12 @@ router.get('/my-votes', protect, async (req: Request, res: Response) => {
       include: [
         {
           model: Poll,
+          as: 'poll',
           attributes: ['id', 'question'],
         },
         {
           model: PollOption,
+          as: 'option',
           attributes: ['text']
         }
       ],
@@ -24,13 +26,13 @@ router.get('/my-votes', protect, async (req: Request, res: Response) => {
     const formattedVotes = votes.map(vote => {
       const voteWithAssociations = vote as Vote & {
         poll: Poll;
-        pollOption: PollOption;
+        option: PollOption;
       };
 
       return {
         id: vote.id,
         question: voteWithAssociations.poll?.question || 'Unknown Poll',
-        optionText: voteWithAssociations.pollOption?.text || 'Unknown Option',
+        optionText: voteWithAssociations.option?.text || 'Unknown Option',
         votedAt: vote.createdAt,
         reward: vote.rewardAmount
       };
