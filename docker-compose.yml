@@ -7,9 +7,9 @@ services:
     container_name: devops-db
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 1234
-      POSTGRES_DB: vote2earn
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"  # Accès local possible sur localhost:5432
     volumes:
@@ -24,15 +24,15 @@ services:
       - "3000:3000"
     environment:
       # Variables requises par index.ts
-      NODE_ENV: development
-      PORT: 3000
-      DB_HOST: db      # Nom du service ci-dessus (DNS interne Docker)
-      DB_PORT: 5432
-      DB_USER: postgres
-      DB_NAME: vote2earn
-      DB_PASSWORD: 1234  # Doit correspondre à POSTGRES_PASSWORD
-      JWT_SECRET: super_secret_key_pour_le_dev
-      JWT_EXPIRES_IN: 1d
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${PORT}
+      DB_HOST: ${DB_HOST}      # Nom du service ci-dessus (DNS interne Docker)
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_NAME: ${DB_NAME}
+      DB_PASSWORD: ${DB_PASSWORD}  # Doit correspondre à POSTGRES_PASSWORD
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
     depends_on:
       - db  # Attend que la DB soit lancée avant de démarrer
 
