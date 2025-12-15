@@ -8,7 +8,7 @@
     "dev": "NODE_ENV=development tsx watch src/index.ts",
     "build": "tsc",
     "start": "NODE_ENV=production node dist/index.js",
-    "migrate": "NODE_OPTIONS='--loader ts-node/esm' node --experimental-specifier-resolution=node scripts/run-migrations.ts",
+    "migrate": "node scripts/run-migrations.js",
     "seed": "NODE_OPTIONS='--loader ts-node/esm' tsx src/seeders/index.ts",
     "test": "NODE_OPTIONS='--loader ts-node/esm' jest",
     "lint": "eslint . --ext .ts",
