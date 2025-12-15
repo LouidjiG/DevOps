@@ -10,7 +10,7 @@
     "start": "NODE_ENV=production node dist/index.js",
     "migrate": "node scripts/run-migrations.js",
     "seed": "NODE_OPTIONS='--loader ts-node/esm' tsx src/seeders/index.ts",
-    "test": "NODE_OPTIONS='--loader ts-node/esm' jest",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "create-admin": "NODE_OPTIONS='--import tsx' tsx scripts/createAdmin.ts"

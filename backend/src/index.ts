@@ -109,9 +109,11 @@ process.on('uncaughtException', (error: Error) => {
   console.error('Uncaught Exception:', error);
 });
 
-startServer().catch((error) => {
-  console.error('Erreur critique lors du démarrage du serveur:', error);
-  process.exit(1);
-});
+if (process.env.NODE_ENV !== 'test') {
+  startServer().catch((error) => {
+    console.error('Erreur critique lors du démarrage du serveur:', error);
+    process.exit(1);
+  });
+}
 
 export { app };
