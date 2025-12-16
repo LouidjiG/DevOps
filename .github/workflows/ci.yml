@@ -140,16 +140,13 @@ jobs:
           use-kubelogin: 'true'
 
       - name: Deploy to AKS
-        uses: Azure/k8s-deploy@v4
-        with:
-          action: deploy
-          manifests: |
-            k8s/prod/kustomization.yaml
-            k8s/prod/backend-patch.yml
-            k8s/prod/frontend-patch.yml
-            k8s/prod/postgres-patch.yml
-            k8s/prod/configmap-patch.yml
-          strategy: basic
+        run: |
+          kubectl apply -f k8s/configmap.yml
+          kubectl apply -f k8s/postgres.yml
+          kubectl apply -f k8s/backend.yml
+          kubectl apply -f k8s/frontend.yml
+          kubectl apply -f k8s/monitoring/prometheus.yml
+          kubectl apply -f k8s/monitoring/grafana.yml
           
       - name: Force Restart (to pull new images)
         run: |

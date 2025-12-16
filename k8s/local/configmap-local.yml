@@ -3,4 +3,4 @@ kind: ConfigMap
 metadata:
   name: app-config
 data:
-  FRONTEND_URL: "http://4.251.177.75"
+  FRONTEND_URL: "http://localhost:8080"

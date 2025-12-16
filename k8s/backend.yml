@@ -14,8 +14,8 @@ spec:
     spec:
       containers:
         - name: backend
-          image: devops-backend:latest
-          imagePullPolicy: Never
+          image: acrvote2earn.azurecr.io/backend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
           envFrom:

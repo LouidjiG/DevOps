@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Déploiement complet du cluster AKS Vote2Earn"
+echo " Déploiement complet du cluster AKS Vote2Earn"
 echo "================================================"
 
 # Couleurs pour les messages
@@ -38,11 +38,17 @@ docker push $ACR_NAME.azurecr.io/frontend:latest
 
 echo -e "${BLUE}[6/6]${NC} Déploiement sur Kubernetes..."
 kubectl apply -f k8s/secrets.yml
-kubectl apply -k k8s/prod
-kubectl apply -f k8s/monitoring/
+kubectl apply -f k8s/configmap.yml
+kubectl apply -f k8s/postgres.yml
+kubectl apply -f k8s/backend.yml
+kubectl apply -f k8s/frontend.yml
+
+# Deploy monitoring
+kubectl apply -f k8s/monitoring/prometheus.yml
+kubectl apply -f k8s/monitoring/grafana.yml
 
 echo ""
-echo -e "${GREEN}✅ Déploiement terminé !${NC}"
+echo -e "${GREEN} Déploiement terminé !${NC}"
 echo ""
 echo "Attendre ~2 minutes que les pods démarrent, puis récupérer l'IP publique :"
 echo "  kubectl get svc frontend"
