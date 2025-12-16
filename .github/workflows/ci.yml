@@ -61,10 +61,34 @@ jobs:
       - name: Build
         run: npm run build
 
+  check-infrastructure:
+    name: Check if Infrastructure Exists
+    runs-on: ubuntu-latest
+    outputs:
+      infra-exists: ${{ steps.check.outputs.exists }}
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
+
+      - name: Check AKS Cluster
+        id: check
+        run: |
+          if az aks show --name aks-vote2earn --resource-group rg-vote2earn &>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo " Infrastructure exists - deployment will proceed"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo " Infrastructure not found - skipping deployment"
+            echo "Run './scripts/deploy.sh' locally to create infrastructure first"
+          fi
+
   build-push:
     name: Build & Push to ACR
     runs-on: ubuntu-latest
-    needs: [backend-test, frontend-build]
+    needs: [backend-test, frontend-build, check-infrastructure]
+    if: needs.check-infrastructure.outputs.infra-exists == 'true'
     steps:
       - uses: actions/checkout@v4
 
