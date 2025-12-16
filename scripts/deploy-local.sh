@@ -18,12 +18,7 @@ docker-compose build
 
 echo -e "${BLUE}[3/4]${NC} Déploiement des ressources Kubernetes..."
 kubectl apply -f k8s/secrets.yml
-kubectl apply -f k8s/configmap.yml
 kubectl apply -f k8s/postgres.yml
-kubectl apply -f k8s/backend.yml
-kubectl apply -f k8s/frontend.yml
-
-# Apply local overrides
 kubectl apply -f k8s/local/configmap-local.yml
 kubectl apply -f k8s/local/backend-local.yml
 kubectl apply -f k8s/local/frontend-local.yml

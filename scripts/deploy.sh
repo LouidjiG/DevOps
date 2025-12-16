@@ -17,6 +17,7 @@ ACR_NAME="acrvote2earn"
 
 echo -e "${BLUE}[1/6]${NC} Création de l'infrastructure Terraform..."
 cd terraform
+terraform init -upgrade
 terraform apply -auto-approve
 cd ..
 

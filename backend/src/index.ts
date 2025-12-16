@@ -46,7 +46,10 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow all origins if FRONTEND_URL is "*" (local development)
+    if (process.env.FRONTEND_URL === '*') {
+      callback(null, true);
+    } else if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       console.warn(`Origine non autorisée: ${origin}`);

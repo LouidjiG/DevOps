@@ -245,6 +245,7 @@ k8s/secrets.yml
 # Terraform State (Contains Secrets!)
 terraform/*.tfstate
 terraform/*.tfstate.backup
+terraform/*.tfstate.lock.info
 .terraform/
 
 # Dependencies & Build
