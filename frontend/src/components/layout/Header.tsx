@@ -41,12 +41,12 @@ export function Header() {
               </>
             )}
             {user && (
-            <Link
-              to="/profile"
-              className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              Mon Profil
-            </Link>
+              <Link
+                to="/profile"
+                className={`${isActive('/profile')} px-1 pb-1 transition-colors`}
+              >
+                Mon Profil
+              </Link>
             )}
             {user && (
               <Link
@@ -56,12 +56,15 @@ export function Header() {
                 Sondages
               </Link>
             )}
-            <Link
-              to="/db-test"
-              className={`${isActive('/db-test')} px-1 pb-1 transition-colors`}
-            >
-              Test BDD
-            </Link>
+
+            {user?.role === 'admin' && (
+              <Link
+                to="/admin"
+                className={`${isActive('/admin')} px-1 pb-1 transition-colors font-semibold text-blue-600`}
+              >
+                Dashboard Admin
+              </Link>
+            )}
           </nav>
         </div>
         <div className="flex items-center space-x-4">
