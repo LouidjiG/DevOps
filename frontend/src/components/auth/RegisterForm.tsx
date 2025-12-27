@@ -7,6 +7,7 @@ type RegisterFormData = {
   email: string;
   password: string;
   confirmPassword: string;
+  role: string;
 };
 
 type RegisterFormErrors = {
@@ -17,7 +18,11 @@ type RegisterFormErrors = {
   root?: string;
 };
 
-export function RegisterForm() {
+type Props = {
+  preselectedRole?: string;
+};
+
+export function RegisterForm({ preselectedRole }: Props) {
   const { register: registerUser } = useAuth();
   const navigate = useNavigate();
 
@@ -26,6 +31,7 @@ export function RegisterForm() {
     email: '',
     password: '',
     confirmPassword: '',
+    role: preselectedRole || 'user',
   });
 
   const [errors, setErrors] = useState<RegisterFormErrors>({});
@@ -85,7 +91,7 @@ export function RegisterForm() {
 
     try {
       setIsSubmitting(true);
-      await registerUser(formData.username, formData.email, formData.password);
+      await registerUser(formData.username, formData.email, formData.password, formData.role);
       navigate('/dashboard');
     } catch (error: any) {
       setErrors((prev) => ({
@@ -120,9 +126,8 @@ export function RegisterForm() {
             name="username"
             type="text"
             autoComplete="username"
-            className={`appearance-none block w-full px-3 py-2 border ${
-              errors.username ? 'border-red-300' : 'border-gray-300'
-            } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+            className={`appearance-none block w-full px-3 py-2 border ${errors.username ? 'border-red-300' : 'border-gray-300'
+              } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
             value={formData.username}
             onChange={handleChange}
           />
@@ -142,9 +147,8 @@ export function RegisterForm() {
             name="email"
             type="email"
             autoComplete="email"
-            className={`appearance-none block w-full px-3 py-2 border ${
-              errors.email ? 'border-red-300' : 'border-gray-300'
-            } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+            className={`appearance-none block w-full px-3 py-2 border ${errors.email ? 'border-red-300' : 'border-gray-300'
+              } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
             value={formData.email}
             onChange={handleChange}
           />
@@ -167,9 +171,8 @@ export function RegisterForm() {
             name="password"
             type="password"
             autoComplete="new-password"
-            className={`appearance-none block w-full px-3 py-2 border ${
-              errors.password ? 'border-red-300' : 'border-gray-300'
-            } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+            className={`appearance-none block w-full px-3 py-2 border ${errors.password ? 'border-red-300' : 'border-gray-300'
+              } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
             value={formData.password}
             onChange={handleChange}
           />
@@ -192,9 +195,8 @@ export function RegisterForm() {
             name="confirmPassword"
             type="password"
             autoComplete="new-password"
-            className={`appearance-none block w-full px-3 py-2 border ${
-              errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-            } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+            className={`appearance-none block w-full px-3 py-2 border ${errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+              } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
             value={formData.confirmPassword}
             onChange={handleChange}
           />
@@ -205,6 +207,26 @@ export function RegisterForm() {
           )}
         </div>
       </div>
+
+      {!preselectedRole && (
+        <div>
+          <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+            Account Type
+          </label>
+          <div className="mt-1">
+            <select
+              id="role"
+              name="role"
+              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              value={formData.role}
+              onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
+            >
+              <option value="user">Utilisateur (Voter & Gagner)</option>
+              <option value="vendor">Vendeur (Créer des sondages)</option>
+            </select>
+          </div>
+        </div>
+      )}
 
       <div>
         <button
