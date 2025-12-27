@@ -23,23 +23,24 @@ const router = Router();
 
 router.use(protect);
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', protect, async (req: Request, res: Response) => {
   try {
-    const { question, description, options, reward, endsAt } = req.body;
-    const userId = req.user?.id;
+    const { question, description, options, budget, reward, endsAt } = req.body;
 
-    if (!userId) {
+    const user = (req as any).user;
+    if (!user) {
       return res.status(401).json({
         status: 'error',
         message: 'Utilisateur non authentifié.'
       });
     }
 
-    const user = await User.findByPk(userId);
-    if (!user || user.getDataValue('role') !== 'admin') {
+    const { id: userId, role: userRole, balance: userBalance } = user;
+
+    if (!userRole || (userRole !== 'admin' && userRole !== 'vendor')) {
       return res.status(403).json({
         status: 'error',
-        message: 'Seuls les administrateurs peuvent créer des sondages.'
+        message: 'Accès refusé. Seuls les administrateurs et les vendeurs peuvent créer des sondages.'
       });
     }
 
@@ -57,19 +58,25 @@ router.post('/', async (req: Request, res: Response) => {
         message: 'La récompense doit être un nombre positif.'
       });
     }
-    
-    const userBalance = user.getDataValue('balance');
-    const budgetValue = Number(rewardValue);
-    const isAdmin = user.getDataValue('role') === 'admin';
-    
+
+    const budgetValue = Number(budget);
     if (isNaN(budgetValue) || budgetValue <= 0) {
       return res.status(400).json({
         status: 'error',
         message: 'Le budget doit être un nombre positif.'
       });
     }
-    
-    if (!isAdmin && userBalance < budgetValue) {
+
+    if (budgetValue < rewardValue) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Le budget doit être supérieur ou égal à la récompense.'
+      });
+    }
+
+    const isAdmin = userRole === 'admin';
+
+    if (!isAdmin && userRole !== 'vendor' && Number(userBalance) < budgetValue) {
       return res.status(400).json({
         status: 'error',
         message: 'Solde insuffisant pour créer ce sondage.'
@@ -78,76 +85,44 @@ router.post('/', async (req: Request, res: Response) => {
 
     const result = await sequelize.transaction(async (t: Transaction) => {
       console.log('Début de la transaction de création de sondage');
-      
-      console.log('Création du sondage avec les données:', {
-        question,
-        description: description || null,
-        budget: budgetValue,
-        reward: rewardValue,
-        userId,
-        isActive: true,
-        endsAt: endsAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      });
-      
+
       const poll = await Poll.create(
         {
           question: question as string,
           description: description || null,
           budget: budgetValue,
           reward: rewardValue,
-          userId: userId as string,
+          userId,
           isActive: true,
           endsAt: endsAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
         },
-        { 
-          transaction: t,
-          returning: true
-        }
+        { transaction: t }
       );
-      
-      console.log('Sondage créé avec succès. ID du sondage:', poll.id);
-      console.log('Données du sondage créé:', poll.toJSON());
 
-      if (!Array.isArray(options)) {
-        throw new Error('Les options doivent être un tableau de chaînes de caractères');
+      console.log('Sondage créé:', poll.toJSON());
+
+      if (!isAdmin && userRole !== 'vendor') {
+        const userModel = await User.findByPk(userId, { transaction: t });
+        if (userModel) {
+          await userModel.decrement('balance', { by: budgetValue, transaction: t });
+        }
       }
 
-      console.log('Création des options du sondage:', options);
-      
       const pollOptions = [];
-      
-      const pollId = poll.getDataValue('id');
-      
-      if (!pollId) {
-        throw new Error('L\'ID du sondage n\'a pas été correctement généré');
-      }
-      
-      console.log('ID du sondage pour les options (via getDataValue):', pollId);
-      
-      for (const text of options) {
+      for (const optionText of options) {
+        if (!optionText || typeof optionText !== 'string' || optionText.trim() === '') {
+          continue;
+        }
         try {
-          console.log('Création de l\'option avec le texte:', text);
-          
-          const optionData = {
-            text: String(text),
-            pollId: pollId,
-            voteCount: 0,
-            rewardPerVote: 0.0001
-          };
-          
-          console.log('Données de l\'option à créer:', optionData);
-          
           const option = await PollOption.create({
-            text: String(text),
-            pollId: pollId,
+            text: optionText,
+            pollId: poll.getDataValue('id'),
             voteCount: 0,
-            rewardPerVote: 0.0001
-          }, { 
+            rewardPerVote: rewardValue
+          }, {
             transaction: t,
             returning: true
           });
-          
-          console.log('Option créée avec succès:', option.toJSON());
           pollOptions.push(option);
         } catch (err) {
           console.error('Erreur lors de la création de l\'option:', err);
@@ -165,8 +140,16 @@ router.post('/', async (req: Request, res: Response) => {
         options: result.options
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur lors de la création du sondage:', error);
+
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        status: 'error',
+        message: error.errors.map((e: any) => e.message).join(', ')
+      });
+    }
+
     res.status(500).json({
       status: 'error',
       message: 'Une erreur est survenue lors de la création du sondage.'
@@ -176,14 +159,24 @@ router.post('/', async (req: Request, res: Response) => {
 
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { limit = 20, offset = 0 } = req.query;
+    const { limit = 20, offset = 0, search } = req.query;
     const userId = req.user?.id;
 
+    const whereCondition: any = {
+      isActive: true,
+      endsAt: { [Op.gt]: new Date() }
+    };
+
+    if (search) {
+      whereCondition[Op.or] = [
+        { question: { [Op.iLike]: `%${search}%` } },
+        { description: { [Op.iLike]: `%${search}%` } }
+      ];
+    }
+
     const polls = await Poll.findAndCountAll({
-      where: {
-        isActive: true,
-        endsAt: { [Op.gt]: new Date() }
-      },
+      where: whereCondition,
+      distinct: true,
       include: [
         {
           model: PollOption,
@@ -234,6 +227,39 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+router.get('/my-created', protect, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!req.user || (req.user.role !== 'vendor' && req.user.role !== 'admin')) {
+      return res.status(403).json({ status: 'error', message: 'Accès réservé aux vendeurs et administrateurs.' });
+    }
+
+    const polls = await Poll.findAll({
+      where: { userId },
+      include: [{
+        model: PollOption,
+        as: 'pollOptions',
+        attributes: ['id', 'text', 'voteCount']
+      }],
+      order: [['createdAt', 'DESC']]
+    });
+
+    console.log(`[GET /my-created] UserId: ${userId}`);
+    console.log(`[GET /my-created] Polls found: ${polls.length}`);
+    if (polls.length > 0) {
+      console.log(`[GET /my-created] Sample poll:`, JSON.stringify(polls[0], null, 2));
+    }
+
+    res.json({
+      status: 'success',
+      data: polls
+    });
+  } catch (error) {
+    console.error('Erreur récupération sondages créés:', error);
+    res.status(500).json({ status: 'error', message: 'Erreur serveur.' });
+  }
+});
+
 router.get('/:pollId', async (req: Request, res: Response) => {
   try {
     const { pollId } = req.params;
@@ -268,9 +294,27 @@ router.get('/:pollId', async (req: Request, res: Response) => {
       });
     }
 
+    let hasVoted = false;
+    const userId = req.user?.id;
+
+    if (userId) {
+      const vote = await Vote.findOne({
+        where: {
+          pollId: poll.id,
+          userId: userId
+        }
+      });
+      hasVoted = !!vote;
+    }
+
+    const pollData = poll.toJSON();
+
     res.json({
       status: 'success',
-      data: poll
+      data: {
+        ...pollData,
+        hasVoted
+      }
     });
   } catch (error) {
     console.error('Erreur lors de la récupération du sondage:', error);
@@ -397,6 +441,8 @@ router.post('/:pollId/vote', async (req: Request, res: Response) => {
   }
 });
 
+
+
 router.post('/admin/add-credit', async (req: Request, res: Response) => {
   try {
     const adminId = req.user?.id;
@@ -432,14 +478,14 @@ router.post('/admin/add-credit', async (req: Request, res: Response) => {
         message: 'Le montant doit être un nombre positif.'
       });
     }
-    
+
     await User.increment('balance', {
       by: creditAmount,
       where: { id: userId }
     });
 
     const updatedUser = await User.findByPk(userId);
-    
+
     res.json({
       status: 'success',
       message: `Crédit ajouté avec succès. Nouveau solde: ${updatedUser?.getDataValue('balance')}`,
@@ -491,4 +537,103 @@ router.get('/created', async (req: Request, res: Response) => {
   }
 });
 
-export const pollRoutes = router;
+router.put('/:id', protect, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { question, description, endsAt } = req.body;
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
+
+    const poll = await Poll.findByPk(id);
+    if (!poll) {
+      return res.status(404).json({ status: 'error', message: 'Sondage non trouvé' });
+    }
+
+    if (userRole !== 'admin' && (userRole !== 'vendor' || poll.getDataValue('userId') !== userId)) {
+      return res.status(403).json({ status: 'error', message: 'Non autorisé à modifier ce sondage.' });
+    }
+
+    if (question) poll.setDataValue('question', question);
+    if (description !== undefined) poll.setDataValue('description', description);
+
+    const { budget, reward } = req.body;
+
+    if (budget !== undefined) {
+      const budgetValue = parseFloat(budget);
+      if (isNaN(budgetValue) || budgetValue <= 0) {
+        return res.status(400).json({ status: 'error', message: 'Le budget doit être un nombre positif.' });
+      }
+      poll.setDataValue('budget', budgetValue);
+    }
+
+    if (reward !== undefined) {
+      const rewardValue = parseFloat(reward);
+      if (isNaN(rewardValue) || rewardValue <= 0) {
+        return res.status(400).json({ status: 'error', message: 'La récompense doit être un nombre positif.' });
+      }
+
+      const currentBudget = budget !== undefined ? parseFloat(budget) : poll.getDataValue('budget');
+      if (rewardValue > currentBudget) {
+        return res.status(400).json({ status: 'error', message: 'La récompense ne peut pas être supérieure au budget.' });
+      }
+
+      poll.setDataValue('reward', rewardValue);
+
+      await PollOption.update(
+        { rewardPerVote: rewardValue },
+        { where: { pollId: poll.id } }
+      );
+    }
+
+    if (endsAt) {
+      const newEndDate = new Date(endsAt);
+      if (newEndDate <= new Date()) {
+        return res.status(400).json({ status: 'error', message: 'La date de fin doit être dans le futur.' });
+      }
+      poll.setDataValue('endsAt', newEndDate);
+    }
+
+    await poll.save();
+
+    res.json({
+      status: 'success',
+      data: poll,
+      message: 'Sondage mis à jour avec succès.'
+    });
+  } catch (error: any) {
+    console.error('Erreur updating poll:', error);
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        status: 'error',
+        message: error.errors.map((e: any) => e.message).join(', ')
+      });
+    }
+    res.status(500).json({ status: 'error', message: 'Erreur serveur lors de la mise à jour.' });
+  }
+});
+
+router.delete('/:id', protect, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
+
+    const poll = await Poll.findByPk(id);
+    if (!poll) {
+      return res.status(404).json({ status: 'error', message: 'Sondage non trouvé' });
+    }
+
+    if (userRole === 'admin' || (userRole === 'vendor' && poll.getDataValue('userId') === userId)) {
+      await poll.destroy();
+      return res.json({ status: 'success', message: 'Sondage supprimé' });
+    }
+
+    return res.status(403).json({ status: 'error', message: 'Non autorisé à supprimer ce sondage' });
+
+  } catch (error) {
+    console.error('Error deleting poll:', error);
+    res.status(500).json({ status: 'error', message: 'Erreur serveur lors de la suppression' });
+  }
+});
+
+export { router as pollRoutes };

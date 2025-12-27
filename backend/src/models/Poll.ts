@@ -17,7 +17,7 @@ export interface PollAttributes {
   updatedAt: Date;
 }
 
-export interface PollCreationAttributes extends Optional<PollAttributes, 'id' | 'isActive' | 'createdAt' | 'updatedAt'> {}
+export interface PollCreationAttributes extends Optional<PollAttributes, 'id' | 'isActive' | 'createdAt' | 'updatedAt'> { }
 
 class Poll extends Model<PollAttributes, PollCreationAttributes> implements PollAttributes {
   declare id: string;
@@ -106,6 +106,7 @@ Poll.init(
     userId: {
       type: DataTypes.UUID,
       allowNull: false,
+      field: 'user_id',
       references: {
         model: 'users',
         key: 'id',
