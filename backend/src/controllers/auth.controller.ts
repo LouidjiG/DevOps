@@ -18,7 +18,7 @@ declare global {
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, role } = req.body;
 
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
@@ -31,11 +31,16 @@ export const register = async (req: Request, res: Response) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    let userRole = UserRole.USER;
+    if (role === 'vendor') {
+      userRole = UserRole.VENDOR;
+    }
+
     const user = await User.create({
       username,
       email,
       password: hashedPassword,
-      role: UserRole.USER,
+      role: userRole,
       balance: 0
     });
 
@@ -86,9 +91,9 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { 
-        id: user.getDataValue('id'), 
-        role: user.getDataValue('role') 
+      {
+        id: user.getDataValue('id'),
+        role: user.getDataValue('role')
       },
       JWT_SECRET,
       { expiresIn: '24h' }
@@ -118,7 +123,7 @@ export const login = async (req: Request, res: Response) => {
 export const getMe = async (req: Request, res: Response) => {
   try {
     const user = req.user;
-    
+
     if (!user) {
       return res.status(401).json({
         status: 'error',
@@ -162,5 +167,45 @@ export const logout = async (req: Request, res: Response) => {
       status: 'error',
       message: 'Erreur lors de la déconnexion.'
     });
+  }
+};
+
+export const addBalance = async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
+    const { amount } = req.body;
+
+    if (!user) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Non autorisé.'
+      });
+    }
+
+    const value = Number(amount);
+    if (isNaN(value) || value <= 0) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Le montant doit être un nombre positif.'
+      });
+    }
+
+    await User.increment('balance', {
+      by: value,
+      where: { id: user.id }
+    });
+
+    const updatedUser = await User.findByPk(user.id, {
+      attributes: { exclude: ['password'] }
+    });
+
+    res.json({
+      status: 'success',
+      message: 'Solde rechargé avec succès.',
+      data: updatedUser
+    });
+  } catch (error) {
+    console.error('Erreur addBalance:', error);
+    res.status(500).json({ status: 'error', message: 'Erreur serveur.' });
   }
 };
