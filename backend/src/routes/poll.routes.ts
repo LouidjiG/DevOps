@@ -545,7 +545,7 @@ router.get('/created', async (req: Request, res: Response) => {
       include: [
         {
           model: PollOption,
-          as: 'options',
+          as: 'pollOptions',
           attributes: ['id', 'text', 'voteCount']
         }
       ],

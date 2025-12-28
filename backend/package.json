@@ -8,9 +8,9 @@
     "dev": "NODE_ENV=development tsx watch src/index.ts",
     "build": "tsc",
     "start": "NODE_ENV=production node dist/index.js",
-    "migrate": "NODE_OPTIONS='--loader ts-node/esm' node --experimental-specifier-resolution=node scripts/run-migrations.ts",
+    "migrate": "node scripts/run-migrations.js",
     "seed": "NODE_OPTIONS='--loader ts-node/esm' tsx src/seeders/index.ts",
-    "test": "NODE_OPTIONS='--loader ts-node/esm' jest",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "create-admin": "NODE_OPTIONS='--import tsx' tsx scripts/createAdmin.ts"
@@ -46,7 +46,12 @@
   },
   "devDependencies": {
     "@types/helmet": "^4.0.0",
+    "@types/jest": "^29.5.14",
     "@types/morgan": "^1.9.9",
+    "@types/supertest": "^6.0.3",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4",
+    "ts-jest": "^29.4.6",
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.6.2"
   }

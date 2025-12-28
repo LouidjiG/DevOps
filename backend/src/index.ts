@@ -40,12 +40,16 @@ app.use(helmet());
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
-  'http://localhost:5175'
-];
+  'http://localhost:5175',
+  process.env.FRONTEND_URL
+].filter(Boolean); // Retire les valeurs undefined
 
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow all origins if FRONTEND_URL is "*" (local development)
+    if (process.env.FRONTEND_URL === '*') {
+      callback(null, true);
+    } else if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       console.warn(`Origine non autorisée: ${origin}`);
@@ -109,9 +113,11 @@ process.on('uncaughtException', (error: Error) => {
   console.error('Uncaught Exception:', error);
 });
 
-startServer().catch((error) => {
-  console.error('Erreur critique lors du démarrage du serveur:', error);
-  process.exit(1);
-});
+if (process.env.NODE_ENV !== 'test') {
+  startServer().catch((error) => {
+    console.error('Erreur critique lors du démarrage du serveur:', error);
+    process.exit(1);
+  });
+}
 
 export { app };

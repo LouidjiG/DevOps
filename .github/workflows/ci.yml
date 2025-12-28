@@ -1,0 +1,154 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, Killian ]
+  pull_request:
+    branches: [ main, Killian ]
+
+jobs:
+  backend-test:
+    name: Backend Build & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Type Check & Build
+        run: npm run build
+
+      - name: Run Tests
+        run: npm test
+        env:
+          JWT_SECRET: "test_secret"
+          JWT_EXPIRES_IN: "1d"
+          DB_NAME: "test_db"
+          DB_USER: "test_user"
+          DB_HOST: "localhost"
+          DB_PORT: "5432"
+
+  frontend-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+  check-infrastructure:
+    name: Check if Infrastructure Exists
+    runs-on: ubuntu-latest
+    outputs:
+      infra-exists: ${{ steps.check.outputs.exists }}
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
+
+      - name: Check AKS Cluster
+        id: check
+        run: |
+          if az aks show --name aks-vote2earn --resource-group rg-vote2earn &>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo " Infrastructure exists - deployment will proceed"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo " Infrastructure not found - skipping deployment"
+            echo "Run './scripts/deploy.sh' locally to create infrastructure first"
+          fi
+
+  build-push:
+    name: Build & Push to ACR
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-build, check-infrastructure]
+    if: needs.check-infrastructure.outputs.infra-exists == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
+
+      - name: ACR Login
+        run: az acr login --name acrvote2earn
+
+      - name: Build & Push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: acrvote2earn.azurecr.io/backend:latest
+
+      - name: Build & Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: acrvote2earn.azurecr.io/frontend:latest
+
+  deploy:
+    name: Deploy to AKS
+    runs-on: ubuntu-latest
+    needs: [build-push]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
+
+      - name: Set up kubelogin for non-interactive login
+        uses: azure/use-kubelogin@v1
+        with:
+          kubelogin-version: 'v0.0.25'
+
+      - name: Get K8s Context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: rg-vote2earn
+          cluster-name: aks-vote2earn
+          admin: 'true'
+          use-kubelogin: 'true'
+
+      - name: Deploy to AKS
+        run: |
+          kubectl apply -f k8s/configmap.yml
+          kubectl apply -f k8s/postgres.yml
+          kubectl apply -f k8s/backend.yml
+          kubectl apply -f k8s/frontend.yml
+          kubectl apply -f k8s/monitoring/prometheus.yml
+          kubectl apply -f k8s/monitoring/grafana.yml
+          
+      - name: Force Restart (to pull new images)
+        run: |
+          kubectl rollout restart deployment/backend
+          kubectl rollout restart deployment/frontend

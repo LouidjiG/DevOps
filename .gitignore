@@ -233,3 +233,25 @@ bower_components
 psd
 thumb
 sketch
+
+# Security & Secrets
+.env
+.env.*
+! .env.example
+k8s/secrets.yml
+*.pem
+*.key
+
+# Terraform State (Contains Secrets!)
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/*.tfstate.lock.info
+.terraform/
+
+# Dependencies & Build
+node_modules/
+dist/
+coverage/
+
+# OS
+.DS_Store

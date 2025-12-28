@@ -54,7 +54,7 @@ const sequelize = new Sequelize({
     idle: 10000,
   },
   benchmark: process.env.NODE_ENV === 'development',
-  dialectOptions: process.env.NODE_ENV === 'production' ? {
+  dialectOptions: process.env.DB_SSL === 'true' ? {
     ssl: {
       require: true,
       rejectUnauthorized: false,
@@ -101,11 +101,11 @@ export default {
     host: process.env.PROD_DB_HOST || process.env.DB_HOST,
     port: parseInt(process.env.PROD_DB_PORT || process.env.DB_PORT || '5432', 10),
     dialect: 'postgres',
-    dialectOptions: {
+    dialectOptions: process.env.DB_SSL === 'true' ? {
       ssl: {
         require: true,
         rejectUnauthorized: false,
       },
-    },
+    } : {},
   },
 };

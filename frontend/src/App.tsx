@@ -51,6 +51,8 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
 function DashboardPage() {
   const { user } = useAuth();
 
+  const { user } = useAuth();
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -76,8 +78,10 @@ function DashboardPage() {
 function App() {
   console.log('Rendu du composant App');
 
+
   const token = localStorage.getItem('token');
   console.log('Token dans App:', token);
+
 
   return (
     <QueryClientProvider client={queryClient}>
