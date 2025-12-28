@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { pollsApi } from '../lib/api';
-import { useAuth } from '../contexts/AuthContext';
+// import { useAuth } from '../contexts/AuthContext';
 
 const CreatePollPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const [formData, setFormData] = useState({
     question: '',
     description: '',
@@ -55,35 +55,40 @@ const CreatePollPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.question.trim()) {
       setError('La question est requise');
       return;
     }
-    
+
+    if (formData.question.trim().length < 5) {
+      setError('La question doit faire au moins 5 caractères');
+      return;
+    }
+
     const validOptions = formData.options.filter(option => option.trim() !== '');
     if (validOptions.length < 2) {
       setError('Au moins deux options sont requises');
       return;
     }
-    
+
     const budget = parseFloat(formData.budget);
     const reward = parseFloat(formData.reward);
-    
+
     if (isNaN(budget) || budget <= 0) {
       setError('Le budget doit être un nombre positif');
       return;
     }
-    
+
     if (isNaN(reward) || reward <= 0) {
       setError('La récompense doit être un nombre positif');
       return;
     }
-    
+
     try {
       setIsSubmitting(true);
       setError('');
-      
+
       await pollsApi.createPoll({
         question: formData.question,
         description: formData.description || undefined,
@@ -92,11 +97,12 @@ const CreatePollPage = () => {
         reward,
         endsAt: formData.endsAt || undefined
       });
-      
+
       navigate('/polls');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erreur lors de la création du sondage:', err);
-      setError('Une erreur est survenue lors de la création du sondage');
+      const errorMessage = err.response?.data?.message || 'Une erreur est survenue lors de la création du sondage';
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -105,13 +111,13 @@ const CreatePollPage = () => {
   return (
     <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Créer un nouveau sondage</h1>
-      
+
       {error && (
         <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
           {error}
         </div>
       )}
-      
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor="question" className="block text-sm font-medium text-gray-700 mb-1">
@@ -128,7 +134,7 @@ const CreatePollPage = () => {
             required
           />
         </div>
-        
+
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
             Description (optionnel)
@@ -143,7 +149,7 @@ const CreatePollPage = () => {
             placeholder="Décrivez plus en détail votre sondage..."
           />
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Options de réponse *
@@ -173,7 +179,7 @@ const CreatePollPage = () => {
                 )}
               </div>
             ))}
-            
+
             {formData.options.length < 10 && (
               <button
                 type="button"
@@ -188,7 +194,7 @@ const CreatePollPage = () => {
             )}
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label htmlFor="budget" className="block text-sm font-medium text-gray-700 mb-1">
@@ -209,13 +215,14 @@ const CreatePollPage = () => {
                 className="pl-7 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 placeholder="0.00"
                 required
+                autoComplete="off"
               />
             </div>
             <p className="mt-1 text-xs text-gray-500">
               Montant total à répartir entre les participants
             </p>
           </div>
-          
+
           <div>
             <label htmlFor="reward" className="block text-sm font-medium text-gray-700 mb-1">
               Récompense par vote (€) *
@@ -235,6 +242,7 @@ const CreatePollPage = () => {
                 className="pl-7 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 placeholder="0.00"
                 required
+                autoComplete="off"
               />
             </div>
             <p className="mt-1 text-xs text-gray-500">
@@ -242,7 +250,7 @@ const CreatePollPage = () => {
             </p>
           </div>
         </div>
-        
+
         <div>
           <label htmlFor="endsAt" className="block text-sm font-medium text-gray-700 mb-1">
             Date de fin (optionnel)
@@ -260,7 +268,7 @@ const CreatePollPage = () => {
             Si non spécifié, le sondage durera 7 jours
           </p>
         </div>
-        
+
         <div className="pt-4 flex justify-end space-x-3">
           <button
             type="button"

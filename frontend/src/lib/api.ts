@@ -41,18 +41,25 @@ export interface Poll {
   updatedAt: string;
   options?: PollOption[];
   hasVoted?: boolean;
+  creator?: {
+    id: string;
+    username: string;
+  };
 }
 
 export const authApi = {
-  register: (data: { username: string; email: string; password: string }) =>
-    api.post('/auth/register', data),
+  register: (data: { username: string; email: string; password: string; role?: string }) =>
+    api.post<AuthResponse>('/auth/register', data),
   login: (data: { email: string; password: string }) =>
     api.post('/auth/login', data),
   getMe: () => api.get('/auth/me'),
+  addBalance: (amount: number) => api.post<{ status: string; data: User; message: string }>('/auth/add-balance', { amount }),
 };
 
 export const pollsApi = {
-  getAllPolls: () => api.get<{ data: Poll[] }>('/polls'),
+  getAllPolls: (params?: { limit?: number; offset?: number; search?: string }) => api.get<{ data: Poll[]; meta: { total: number } }>('/polls', { params }),
+  getMyCreatedPolls: () => api.get<{ data: Poll[] }>('/polls/my-created'),
+  deletePoll: (id: string) => api.delete<{ status: string }>(`/polls/${id}`),
   getPollById: (id: string) => api.get<{ data: Poll }>(`/polls/${id}`),
   createPoll: (data: {
     question: string;
@@ -62,8 +69,16 @@ export const pollsApi = {
     reward: number;
     endsAt?: string;
   }) => api.post('/polls', data),
-  vote: (pollId: string, optionId: string) => 
+  updatePoll: (id: string, data: { question: string; description?: string; endsAt?: string; budget?: number; reward?: number }) =>
+    api.put<{ status: string; data: Poll; message: string }>(`/polls/${id}`, data),
+  vote: (pollId: string, optionId: string) =>
     api.post(`/polls/${pollId}/vote`, { optionId }),
+};
+
+export const adminApi = {
+  getStats: () => api.get<{ data: { users: number; polls: number; votes: number; totalBalance: string } }>('/users/stats'),
+  getUsers: (params?: { limit?: number; offset?: number; search?: string }) =>
+    api.get<{ data: User[]; meta: { total: number } }>('/users', { params }),
 };
 
 export interface User {
@@ -72,6 +87,7 @@ export interface User {
   email: string;
   role: string;
   balance: string;
+  createdAt: string;
 }
 
 export interface AuthResponse {

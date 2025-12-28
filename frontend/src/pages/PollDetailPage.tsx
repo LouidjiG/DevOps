@@ -21,7 +21,7 @@ const PollDetailPage = () => {
   const [selectedOption, setSelectedOption] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [voteSuccess, setVoteSuccess] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, refreshUser } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,7 +32,7 @@ const PollDetailPage = () => {
         const response = await pollsApi.getPollById(pollId!);
         console.log('Réponse complète du serveur:', response);
         console.log('Données du sondage:', response.data);
-        
+
         if (response.data && response.data.data) {
           const responseData = response.data.data as ApiPollResponse;
           const pollData: Poll = {
@@ -63,7 +63,7 @@ const PollDetailPage = () => {
 
   const handleVote = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedOption) {
       setError('Veuillez sélectionner une option avant de voter.');
       return;
@@ -72,22 +72,30 @@ const PollDetailPage = () => {
     try {
       setIsSubmitting(true);
       setError(null);
-      
+
       console.log('Envoi du vote pour l\'option:', selectedOption);
       const response = await pollsApi.vote(pollId!, selectedOption);
       console.log('Réponse du serveur:', response.data);
-      
+
       setVoteSuccess(true);
-      
+
+      // Refresh user to get updated balance
+      await refreshUser();
+
       try {
         const updatedPoll = await pollsApi.getPollById(pollId!);
-        setPoll(updatedPoll.data.data);
+        const responseData = updatedPoll.data.data as ApiPollResponse;
+        const pollData: Poll = {
+          ...responseData,
+          options: responseData.pollOptions || responseData.options || []
+        };
+        setPoll(pollData);
       } catch (pollError) {
         console.error('Erreur lors du rechargement du sondage:', pollError);
       }
     } catch (err: any) {
       console.error('Erreur lors du vote:', err);
-      
+
       if (err.response) {
         const errorMessage = err.response.data?.message || err.response.statusText;
         setError(`Erreur lors du vote: ${errorMessage}`);
@@ -133,9 +141,9 @@ const PollDetailPage = () => {
 
   const options = poll.options || [];
   const hasOptions = options.length > 0;
-  
-  const totalVotes = hasOptions 
-    ? options.reduce((sum, opt) => sum + (opt.voteCount || 0), 0) 
+
+  const totalVotes = hasOptions
+    ? options.reduce((sum, opt) => sum + (opt.voteCount || 0), 0)
     : 0;
 
   return (
@@ -147,12 +155,24 @@ const PollDetailPage = () => {
             <p className="text-gray-600 mb-6">{poll.description}</p>
           )}
 
-          {voteSuccess ? (
+          {voteSuccess && (
             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6">
               <strong className="font-bold">Merci pour votre vote !</strong>
-              <span className="block sm:inline"> Votre vote a été enregistré avec succès.</span>
+              <span className="block mt-1">
+                Vous avez gagné <strong>{parseFloat(poll?.reward || '0').toFixed(2)} €</strong>.
+                Votre nouveau solde est de <strong>{user?.balance ? parseFloat(String(user.balance)).toFixed(2) : '0.00'} €</strong>.
+              </span>
             </div>
-          ) : !isAuthenticated ? (
+          )}
+
+          {poll.hasVoted && !voteSuccess && (
+            <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-6">
+              <strong className="font-bold">Vous avez déjà voté</strong>
+              <span className="block sm:inline"> Vous pouvez consulter les résultats ci-dessous.</span>
+            </div>
+          )}
+
+          {!isAuthenticated ? (
             <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-6">
               <p>Veuillez vous connecter pour voter à ce sondage.</p>
               <button
@@ -166,7 +186,7 @@ const PollDetailPage = () => {
             <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-6">
               <p>Ce sondage ne contient aucune option de vote.</p>
             </div>
-          ) : (
+          ) : !poll.hasVoted && !voteSuccess ? (
             <form onSubmit={handleVote} className="space-y-4">
               <div className="space-y-2">
                 {options.map((option: PollOption) => (
@@ -200,7 +220,7 @@ const PollDetailPage = () => {
                 </button>
               </div>
             </form>
-          )}
+          ) : null}
 
           <div className="mt-8">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Résultats</h2>
@@ -213,7 +233,7 @@ const PollDetailPage = () => {
                 {options.map((option: PollOption) => {
                   const optionVotes = option.voteCount || 0;
                   const percentage = totalVotes > 0 ? Math.round((optionVotes / totalVotes) * 100) : 0;
-                  
+
                   return (
                     <div key={option.id} className="mb-2">
                       <div className="flex justify-between text-sm mb-1">
