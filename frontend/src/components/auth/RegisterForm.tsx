@@ -41,24 +41,24 @@ export function RegisterForm({ preselectedRole }: Props) {
     const newErrors: RegisterFormErrors = {};
 
     if (!formData.username || formData.username.trim().length < 3) {
-      newErrors.username = 'Username must be at least 3 characters';
+      newErrors.username = 'Le nom d\'utilisateur doit contenir au moins 3 caractères';
     }
 
     if (!formData.email) {
-      newErrors.email = 'Invalid email address';
+      newErrors.email = 'Email requis';
     } else {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        newErrors.email = 'Invalid email address';
+        newErrors.email = 'Adresse email invalide';
       }
     }
 
     if (!formData.password || formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = 'Le mot de passe doit contenir au moins 6 caractères';
     }
 
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords don't match";
+      newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
     }
 
     setErrors(newErrors);
@@ -98,7 +98,7 @@ export function RegisterForm({ preselectedRole }: Props) {
         ...prev,
         root:
           error?.response?.data?.message ||
-          'Registration failed. Please try again.',
+          'Inscription echouée. Veuillez réessayer.',
       }));
     } finally {
       setIsSubmitting(false);
@@ -118,7 +118,7 @@ export function RegisterForm({ preselectedRole }: Props) {
           htmlFor="username"
           className="block text-sm font-medium text-gray-700"
         >
-          Username
+          Nom d'utilisateur
         </label>
         <div className="mt-1">
           <input
@@ -139,7 +139,7 @@ export function RegisterForm({ preselectedRole }: Props) {
 
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email address
+          Email
         </label>
         <div className="mt-1">
           <input
@@ -163,7 +163,7 @@ export function RegisterForm({ preselectedRole }: Props) {
           htmlFor="password"
           className="block text-sm font-medium text-gray-700"
         >
-          Password
+          Mot de passe
         </label>
         <div className="mt-1">
           <input
@@ -187,7 +187,7 @@ export function RegisterForm({ preselectedRole }: Props) {
           htmlFor="confirmPassword"
           className="block text-sm font-medium text-gray-700"
         >
-          Confirm Password
+          Confirmation du mot de passe
         </label>
         <div className="mt-1">
           <input
@@ -211,7 +211,7 @@ export function RegisterForm({ preselectedRole }: Props) {
       {!preselectedRole && (
         <div>
           <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-            Account Type
+            Type de compte
           </label>
           <div className="mt-1">
             <select
@@ -234,7 +234,7 @@ export function RegisterForm({ preselectedRole }: Props) {
           disabled={isSubmitting}
           className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? 'Creating account...' : 'Create account'}
+          {isSubmitting ? 'Inscription en cours...' : 'S\'inscrire'}
         </button>
       </div>
     </form>
