@@ -4,7 +4,8 @@ import bcrypt from 'bcryptjs';
 
 export enum UserRole {
   USER = 'user',
-  ADMIN = 'admin'
+  ADMIN = 'admin',
+  VENDOR = 'vendor'
 }
 
 interface UserAttributes {
@@ -18,17 +19,17 @@ interface UserAttributes {
   updatedAt: Date;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'role' | 'balance' | 'createdAt' | 'updatedAt'> {}
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'role' | 'balance' | 'createdAt' | 'updatedAt'> { }
 
 class User extends Model<UserAttributes, UserCreationAttributes> {
   public getId(): string {
     return this.getDataValue('id');
   }
-  
+
   public getPassword(): string {
     return this.getDataValue('password');
   }
-  
+
   public async setPassword(password: string): Promise<void> {
     const hashedPassword = await User.hashPassword(password);
     this.setDataValue('password', hashedPassword);
@@ -43,24 +44,24 @@ class User extends Model<UserAttributes, UserCreationAttributes> {
     try {
       console.log('=== comparePassword ===');
       console.log('Candidate password:', candidatePassword);
-      
+
       const storedPassword = this.getPassword();
       console.log('Stored password from getter:', storedPassword);
-      
+
       if (!candidatePassword) {
         console.error('Aucun mot de passe fourni pour la comparaison');
         return false;
       }
-      
+
       if (!storedPassword) {
         console.error('Aucun mot de passe stocké pour cet utilisateur');
         return false;
       }
-      
+
       const isMatch = await bcrypt.compare(candidatePassword, storedPassword);
       console.log('Passwords match:', isMatch);
       return isMatch;
-      
+
     } catch (error) {
       console.error('Erreur lors de la comparaison des mots de passe:', error);
       return false;
