@@ -58,7 +58,7 @@ export const authApi = {
 
 export const pollsApi = {
   getAllPolls: (params?: { limit?: number; offset?: number; search?: string }) => api.get<{ data: Poll[]; meta: { total: number } }>('/polls', { params }),
-  getMyCreatedPolls: () => api.get<{ data: Poll[] }>('/polls/my-created'),
+  getMyCreatedPolls: (params?: { limit?: number; offset?: number }) => api.get<{ data: Poll[]; meta: { total: number; limit: number; offset: number } }>('/polls/my-created', { params }),
   deletePoll: (id: string) => api.delete<{ status: string }>(`/polls/${id}`),
   getPollById: (id: string) => api.get<{ data: Poll }>(`/polls/${id}`),
   createPoll: (data: {

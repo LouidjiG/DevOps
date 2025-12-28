@@ -21,10 +21,10 @@ function HomePage() {
                             {user ? (
                                 <div className="space-y-4 sm:space-y-0 sm:mx-auto sm:inline-grid sm:grid-cols-2 sm:gap-5">
                                     <Link
-                                        to="/dashboard"
+                                        to="/profile"
                                         className="flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10"
                                     >
-                                        Tableau de bord
+                                        Voir mon profil
                                     </Link>
                                     <Link
                                         to="/polls"
