@@ -57,18 +57,18 @@ router.post('/', async (req: Request, res: Response) => {
         message: 'La récompense doit être un nombre positif.'
       });
     }
-    
+
     const userBalance = user.getDataValue('balance');
     const budgetValue = Number(rewardValue);
     const isAdmin = user.getDataValue('role') === 'admin';
-    
+
     if (isNaN(budgetValue) || budgetValue <= 0) {
       return res.status(400).json({
         status: 'error',
         message: 'Le budget doit être un nombre positif.'
       });
     }
-    
+
     if (!isAdmin && userBalance < budgetValue) {
       return res.status(400).json({
         status: 'error',
@@ -78,7 +78,7 @@ router.post('/', async (req: Request, res: Response) => {
 
     const result = await sequelize.transaction(async (t: Transaction) => {
       console.log('Début de la transaction de création de sondage');
-      
+
       console.log('Création du sondage avec les données:', {
         question,
         description: description || null,
@@ -88,7 +88,7 @@ router.post('/', async (req: Request, res: Response) => {
         isActive: true,
         endsAt: endsAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
       });
-      
+
       const poll = await Poll.create(
         {
           question: question as string,
@@ -99,12 +99,12 @@ router.post('/', async (req: Request, res: Response) => {
           isActive: true,
           endsAt: endsAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
         },
-        { 
+        {
           transaction: t,
           returning: true
         }
       );
-      
+
       console.log('Sondage créé avec succès. ID du sondage:', poll.id);
       console.log('Données du sondage créé:', poll.toJSON());
 
@@ -113,40 +113,40 @@ router.post('/', async (req: Request, res: Response) => {
       }
 
       console.log('Création des options du sondage:', options);
-      
+
       const pollOptions = [];
-      
+
       const pollId = poll.getDataValue('id');
-      
+
       if (!pollId) {
         throw new Error('L\'ID du sondage n\'a pas été correctement généré');
       }
-      
+
       console.log('ID du sondage pour les options (via getDataValue):', pollId);
-      
+
       for (const text of options) {
         try {
           console.log('Création de l\'option avec le texte:', text);
-          
+
           const optionData = {
             text: String(text),
             pollId: pollId,
             voteCount: 0,
             rewardPerVote: 0.0001
           };
-          
+
           console.log('Données de l\'option à créer:', optionData);
-          
+
           const option = await PollOption.create({
             text: String(text),
             pollId: pollId,
             voteCount: 0,
             rewardPerVote: 0.0001
-          }, { 
+          }, {
             transaction: t,
             returning: true
           });
-          
+
           console.log('Option créée avec succès:', option.toJSON());
           pollOptions.push(option);
         } catch (err) {
@@ -231,6 +231,46 @@ router.get('/', async (req: Request, res: Response) => {
       status: 'error',
       message: 'Une erreur est survenue lors de la récupération des sondages.'
     });
+  }
+});
+
+router.get('/my-created', protect, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!req.user || (req.user.role !== 'vendor' && req.user.role !== 'admin')) {
+      return res.status(403).json({ status: 'error', message: 'Accès réservé aux vendeurs et administrateurs.' });
+    }
+
+    const { limit = 10, offset = 0 } = req.query;
+
+    const polls = await Poll.findAndCountAll({
+      where: { userId },
+      distinct: true,
+      include: [{
+        model: PollOption,
+        as: 'pollOptions',
+        attributes: ['id', 'text', 'voteCount']
+      }],
+      order: [['createdAt', 'DESC']],
+      limit: Number(limit),
+      offset: Number(offset)
+    });
+
+    console.log(`[GET /my-created] UserId: ${userId}`);
+    console.log(`[GET /my-created] Polls found: ${polls.count}`);
+
+    res.json({
+      status: 'success',
+      data: polls.rows,
+      meta: {
+        total: polls.count,
+        limit: Number(limit),
+        offset: Number(offset)
+      }
+    });
+  } catch (error) {
+    console.error('Erreur récupération sondages créés:', error);
+    res.status(500).json({ status: 'error', message: 'Erreur serveur.' });
   }
 });
 
@@ -432,14 +472,14 @@ router.post('/admin/add-credit', async (req: Request, res: Response) => {
         message: 'Le montant doit être un nombre positif.'
       });
     }
-    
+
     await User.increment('balance', {
       by: creditAmount,
       where: { id: userId }
     });
 
     const updatedUser = await User.findByPk(userId);
-    
+
     res.json({
       status: 'success',
       message: `Crédit ajouté avec succès. Nouveau solde: ${updatedUser?.getDataValue('balance')}`,
