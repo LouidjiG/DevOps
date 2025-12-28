@@ -147,7 +147,7 @@ const PollsPage = () => {
 
                 <div className="mt-4 flex justify-between items-center">
                   <div className="text-sm text-gray-500">
-                    {poll.options?.length || 0} options • {parseFloat(String(poll.reward)).toFixed(2)} € à gagner
+                    {parseFloat(String(poll.reward)).toFixed(2)} € à gagner
                   </div>
                   {poll.hasVoted ? (
                     <div className="flex items-center">
