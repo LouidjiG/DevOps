@@ -59,9 +59,9 @@ router.post('/', protect, async (req: Request, res: Response) => {
       });
     }
 
-    const userBalance = user.getDataValue('balance');
+
     const budgetValue = Number(rewardValue);
-    const isAdmin = user.getDataValue('role') === 'admin';
+    const isAdmin = userRole === 'admin';
 
     if (isNaN(budgetValue) || budgetValue <= 0) {
       return res.status(400).json({
@@ -139,7 +139,7 @@ router.post('/', protect, async (req: Request, res: Response) => {
           console.log('Données de l\'option à créer:', optionData);
 
           const option = await PollOption.create({
-            text: optionText,
+            text: String(text),
             pollId: poll.getDataValue('id'),
             voteCount: 0,
             rewardPerVote: 0.0001
