@@ -6,7 +6,6 @@ function HomePage() {
 
     return (
         <div className="bg-white">
-            {/* Hero Section */}
             <div className="relative overflow-hidden">
                 <div className="absolute inset-y-0 h-full w-full bg-gradient-to-br from-indigo-50 to-blue-100 opacity-50 z-0"></div>
                 <div className="relative pt-16 pb-20 sm:pt-24 sm:pb-32 z-10">
@@ -55,7 +54,6 @@ function HomePage() {
                 </div>
             </div>
 
-            {/* Feature Section */}
             <div className="py-12 bg-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="lg:text-center">

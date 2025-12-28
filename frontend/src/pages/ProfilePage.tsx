@@ -158,7 +158,6 @@ export const ProfilePage = () => {
           </div>
         </div>
 
-        {/* Modal for adding balance */}
         {isBalanceModalOpen && (
           <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -222,7 +221,6 @@ export const ProfilePage = () => {
           </div>
         )}
 
-        {/* Vendor Section: Created Polls */}
         {user.role === 'vendor' && (
           <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
             <div className="px-4 py-5 sm:px-6 border-b border-gray-200 bg-orange-50 flex justify-between items-center">

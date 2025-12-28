@@ -79,7 +79,6 @@ const PollDetailPage = () => {
 
       setVoteSuccess(true);
 
-      // Refresh user to get updated balance
       await refreshUser();
 
       try {

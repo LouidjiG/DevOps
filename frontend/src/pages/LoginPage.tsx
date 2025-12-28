@@ -6,15 +6,15 @@ export function LoginPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Sign in to your account
+          Connectez-vous à votre compte
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Or{' '}
+          ou{' '}
           <Link
             to="/register"
             className="font-medium text-indigo-600 hover:text-indigo-500"
           >
-            create a new account
+            Créer un compte
           </Link>
         </p>
       </div>
