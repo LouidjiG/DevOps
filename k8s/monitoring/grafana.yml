@@ -16,7 +16,7 @@ spec:
         - name: grafana
           image: grafana/grafana:latest
           ports:
-            - containerPort: 3000
+            - containerPort: 5000
           env:
             - name: GF_SECURITY_ADMIN_PASSWORD
               value: "admin" # Changez-le en prod !
@@ -30,6 +30,6 @@ spec:
     app: grafana
   ports:
     - protocol: TCP
-      port: 3000
-      targetPort: 3000
+      port: 5000
+      targetPort: 5000
   type: LoadBalancer # Ou ClusterIP si on veut port-forwarder manuellement

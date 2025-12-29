@@ -51,8 +51,6 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
 function DashboardPage() {
   const { user } = useAuth();
 
-  const { user } = useAuth();
-
   if (!user) {
     return <Navigate to="/login" replace />;
   }
