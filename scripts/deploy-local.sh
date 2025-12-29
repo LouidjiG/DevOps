@@ -1,12 +1,12 @@
 #!/bin/bash
 set -e
 
-echo " Déploiement LOCAL (Minikube)"
+echo -e "\033[1;36m Deploiement LOCAL (Minikube)\033[0m"
 echo "=============================="
 
-# Couleurs
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
 NC='\033[0m'
 
 echo -e "${BLUE}[1/4]${NC} Démarrage de Minikube..."

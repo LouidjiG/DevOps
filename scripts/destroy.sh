@@ -1,12 +1,12 @@
 #!/bin/bash
 set -e
 
-echo " Destruction complète du cluster AKS Vote2Earn"
+echo -e "\033[1;31m Destruction complete du cluster AKS Vote2Earn\033[0m"
 echo "================================================"
 
-# Couleurs pour les messages
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
 # Variables

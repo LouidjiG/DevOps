@@ -1,12 +1,12 @@
 #!/bin/bash
 set -e
 
-echo " Mise à jour du cluster AKS Vote2Earn"
+echo -e "\033[1;36m Mise a jour du cluster AKS Vote2Earn\033[0m"
 echo "========================================"
 
-# Couleurs pour les messages
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Variables

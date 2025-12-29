@@ -1,16 +1,15 @@
 #!/bin/bash
 set -e
 
-echo " Déploiement complet du cluster AKS Vote2Earn"
+echo -e "\033[1;36m Deploiement complet du cluster AKS Vote2Earn\033[0m"
 echo "================================================"
 
-# Couleurs pour les messages
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
+YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Variables
 RESOURCE_GROUP="rg-vote2earn"
 AKS_NAME="aks-vote2earn"
 ACR_NAME="acrvote2earn"
